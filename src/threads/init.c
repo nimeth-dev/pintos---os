@@ -134,6 +134,60 @@ pintos_init (void)
     run_actions (argv);
   } else {
     // TODO: no command line passed to kernel. Run interactively 
+// Run interactively
+    while (1) {
+        printf("CS2042> ");
+        char command[50];
+        int pos = 0;
+        uint8_t c;
+
+        // 1. Read input character by character
+        while (1) {
+            c = input_getc(); // Get keypress from the hardware buffer
+           
+            // If the user presses "Enter" (carriage return or newline)
+            if (c == '\r' || c == '\n') {
+                printf("\n");
+                command[pos] = '\0'; // Terminate the string properly
+                break;
+            }
+            // Optional: Handle the Backspace key for a better user experience
+            else if (c == '\b' || c == 127) {
+                if (pos > 0) {
+                    pos--;
+                    printf("\b \b"); // Visually erase the character from the terminal
+                }
+            }
+            // Store the character and print it to the screen
+            else {
+                command[pos] = c;
+                pos++;
+                printf("%c", c);
+            }
+        }
+
+        // If the user just pressed Enter without typing anything, ask again
+        if (pos == 0) {
+            continue;
+        }
+
+        // 2. Compare and execute commands
+        if (strcmp(command, "whoami") == 0) {
+            printf("Nimeth Sandive - [240551E]\n");
+        }
+        else if (strcmp(command, "exit") == 0) {
+            printf("Exiting interactive shell... Bye byeeee !\n");
+            break; // Breaks the loop, allowing the kernel to proceed to shutdown()
+        }
+        else if (strcmp(command, "shutdown") == 0) {
+            shutdown_power_off(); // Directly kills the emulator
+        }
+        else {
+            printf("Unknown command: '%s'\n", command);
+        }
+    }
+
+
   }
 
   /* Finish up. */
