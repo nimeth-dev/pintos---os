@@ -176,7 +176,7 @@ pintos_init (void)
             printf("Nimeth Sandive - [240551E]\n");
         }
         else if (strcmp(command, "exit") == 0) {
-            printf("Exiting interactive shell... Bye byeeee !\n");
+            printf("Exiting interactive shell... Bye!\n");
             break; // Breaks the loop, allowing the kernel to proceed to shutdown()
         }
         else if (strcmp(command, "shutdown") == 0) {

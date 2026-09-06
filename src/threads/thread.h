@@ -92,7 +92,7 @@ struct thread
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
-    int64_t wake_up_tick;
+    int64_t wake_up_tick;       //New code added. Added to store the target wake up time.
 
 
 #ifdef USERPROG
@@ -139,5 +139,6 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
-
+/* Helper for priority scheduling */
+bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux);
 #endif /* threads/thread.h */

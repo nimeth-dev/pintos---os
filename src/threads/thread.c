@@ -200,7 +200,10 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
-
+   if (thread_current ()->priority < priority) 
+  {
+    thread_yield ();
+  }
   return tid;
 }
 
@@ -237,7 +240,8 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+  //This is the old one(FIFO logic---->list_push_back (&ready_list, &t->elem);
+  list_insert_ordered (&ready_list, &t->elem, cmp_priority, NULL);
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -308,7 +312,8 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
+    //Old one------>list_push_back (&ready_list, &cur->elem);
+    list_insert_ordered (&ready_list, &cur->elem, cmp_priority, NULL);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -336,6 +341,15 @@ void
 thread_set_priority (int new_priority) 
 {
   thread_current ()->priority = new_priority;
+  /* If the ready list has a higher priority thread, yield CPU */
+  if (!list_empty (&ready_list))                         /*<---------NEW CODE*/
+    {
+      struct thread *highest_ready = list_entry (list_front (&ready_list), struct thread, elem);
+      if (highest_ready->priority > new_priority) 
+        {
+          thread_yield ();
+        }
+    }
 }
 
 /* Returns the current thread's priority. */
@@ -609,4 +623,11 @@ thread_check_sleep (int64_t current_ticks)
     }
     
   intr_set_level (old_level);
+}
+bool 
+cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED) 
+{
+    struct thread *thread_a = list_entry (a, struct thread, elem);
+    struct thread *thread_b = list_entry (b, struct thread, elem);
+    return thread_a->priority > thread_b->priority;
 }
