@@ -89,38 +89,45 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
+  /* 1. The new fix: Return immediately if negative or zero */
+  if (ticks <= 0) 
+    {
+      return;
+    }
+
   int64_t start = timer_ticks ();
   ASSERT (intr_get_level () == INTR_ON);
-  struct thread *curr = thread_current ();
+
+  /* 2. Your original logic: Disable interrupts, save the wake-up time, and block */
   enum intr_level old_level = intr_disable ();
-  curr->wake_up_tick = start + ticks;
+  
+  struct thread *cur = thread_current ();
+  cur->wake_up_tick = start + ticks;
   thread_block ();
+  
   intr_set_level (old_level);
 }
-
-/* Sleeps for approximately MS milliseconds.  Interrupts must be
-   turned on. */
+/* Sleeps for approximately MS milliseconds.  Interrupts must be turned on. */
 void
 timer_msleep (int64_t ms) 
 {
   real_time_sleep (ms, 1000);
 }
 
-/* Sleeps for approximately US microseconds.  Interrupts must be
-   turned on. */
+/* Sleeps for approximately US microseconds.  Interrupts must be turned on. */
 void
 timer_usleep (int64_t us) 
 {
   real_time_sleep (us, 1000 * 1000);
 }
 
-/* Sleeps for approximately NS nanoseconds.  Interrupts must be
-   turned on. */
+/* Sleeps for approximately NS nanoseconds.  Interrupts must be turned on. */
 void
 timer_nsleep (int64_t ns) 
 {
   real_time_sleep (ns, 1000 * 1000 * 1000);
 }
+
 
 /* Busy-waits for approximately MS milliseconds.  Interrupts need
    not be turned on.
