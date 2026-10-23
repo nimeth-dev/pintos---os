@@ -482,6 +482,16 @@ init_thread (struct thread *t, const char *name, int priority)
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
+  #ifdef USERPROG
+  list_init (&t->children);
+  t->my_child_info = NULL;
+  t->executable_file = NULL;
+  //Newly added
+    /* Initialize open files list and start descriptor numbers at 2 */
+  list_init (&t->fd_list);
+  t->next_fd = 2;
+#endif
+
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -630,4 +640,23 @@ cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UN
     struct thread *thread_a = list_entry (a, struct thread, elem);
     struct thread *thread_b = list_entry (b, struct thread, elem);
     return thread_a->priority > thread_b->priority;
+}
+
+/* Returns the thread with TID, or NULL if not found. */
+struct thread *
+thread_get_by_tid (tid_t tid)
+{
+  enum intr_level old_level = intr_disable ();
+  struct list_elem *e;
+  for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e))
+    {
+      struct thread *t = list_entry (e, struct thread, allelem);
+      if (t->tid == tid)
+        {
+          intr_set_level (old_level);
+          return t;
+        }
+    }
+  intr_set_level (old_level);
+  return NULL;
 }

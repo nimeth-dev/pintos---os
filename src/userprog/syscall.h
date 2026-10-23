@@ -1,6 +1,12 @@
 #ifndef USERPROG_SYSCALL_H
 #define USERPROG_SYSCALL_H
 
-void syscall_init (void);
+#include "threads/synch.h"
 
-#endif /* userprog/syscall.h */
+/* Global lock for synchronizing all file system operations across threads. */
+extern struct lock filesys_lock;
+
+void syscall_init (void);
+void sys_exit (int status);
+
+#endif 

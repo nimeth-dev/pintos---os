@@ -4,7 +4,6 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -80,6 +79,32 @@ typedef int tid_t;
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
+#ifdef USERPROG
+#include "synch.h"
+
+/* Structure to keep track of child processes and their exit status. */
+struct child_process
+  {
+    tid_t tid;                     /* Child's thread id. */
+    int exit_status;               /* Exit code (default -1). */
+    bool is_alive;                 /* True if child is currently running. */
+    bool has_waited;               /* True if parent has already waited on this child. */
+    bool load_success;             /* True if ELF binary loaded successfully. */
+    struct semaphore sem_load;     /* Parent waits on this for load to finish. */
+    struct semaphore sem_wait;     /* Parent waits on this for child to exit. */
+    struct list_elem elem;         /* Element for parent's `children` list. */
+  };
+#endif
+
+/* Represents an open file handle within a user process. */
+struct file_descriptor
+  {
+    int fd;                     /* Unique descriptor integer (starts at 2). */
+    struct file *file;          /* Pointer to the underlying Pintos file struct. */
+    struct list_elem elem;      /* List element for thread's fd_list. */
+  };
+
+
 struct thread
   {
     /* Owned by thread.c. */
@@ -98,7 +123,14 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct list children;               /* List of `struct child_process` for this process. */
+    struct child_process *my_child_info; /* Pointer to our own child_process record. */
+    struct file *executable_file;       /* The binary file currently being executed. */
+    struct list fd_list;                /* Table of open file descriptors for this process. */
+    int next_fd;                        /* Monotonically increasing counter for assigning fd numbers. */
 #endif
+
+
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
@@ -141,4 +173,7 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 /* Helper for priority scheduling */
 bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux);
+
+struct thread *thread_get_by_tid (tid_t tid);
+
 #endif /* threads/thread.h */
